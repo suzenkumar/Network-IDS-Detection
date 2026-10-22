@@ -1,0 +1,139 @@
+{
+  "accuracy": 0.994,
+  "macro_f1": 0.9928,
+  "n_test": 1500,
+  "labels": [
+    "dos",
+    "normal",
+    "probe",
+    "r2l",
+    "u2r"
+  ],
+  "per_class": {
+    "dos": {
+      "precision": 0.9967,
+      "recall": 0.9967,
+      "f1": 0.9967,
+      "support": 300
+    },
+    "normal": {
+      "precision": 0.9912,
+      "recall": 0.9956,
+      "f1": 0.9933,
+      "support": 675
+    },
+    "probe": {
+      "precision": 0.9934,
+      "recall": 1.0,
+      "f1": 0.9967,
+      "support": 300
+    },
+    "r2l": {
+      "precision": 1.0,
+      "recall": 0.9833,
+      "f1": 0.9916,
+      "support": 120
+    },
+    "u2r": {
+      "precision": 1.0,
+      "recall": 0.9714,
+      "f1": 0.9855,
+      "support": 105
+    }
+  },
+  "confusion": {
+    "labels": [
+      "dos",
+      "normal",
+      "probe",
+      "r2l",
+      "u2r"
+    ],
+    "matrix": [
+      [
+        299,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        672,
+        2,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        300,
+        0,
+        0
+      ],
+      [
+        0,
+        2,
+        0,
+        118,
+        0
+      ],
+      [
+        0,
+        3,
+        0,
+        0,
+        102
+      ]
+    ]
+  },
+  "anomaly_auc": 0.9599,
+  "kind": "logreg",
+  "source": "synthetic(seed=42, n=6000)",
+  "rows": 6000,
+  "n_train": 4500,
+  "feature_count": 30,
+  "features": [
+    "duration",
+    "src_bytes",
+    "dst_bytes",
+    "land",
+    "wrong_fragment",
+    "urgent",
+    "num_failed_logins",
+    "logged_in",
+    "num_compromised",
+    "root_shell",
+    "su_attempted",
+    "num_root",
+    "num_file_creations",
+    "count",
+    "srv_count",
+    "serror_rate",
+    "srv_serror_rate",
+    "rerror_rate",
+    "srv_rerror_rate",
+    "same_srv_rate",
+    "diff_srv_rate",
+    "dst_host_count",
+    "dst_host_srv_count",
+    "dst_host_same_srv_rate",
+    "dst_host_diff_srv_rate",
+    "dst_host_serror_rate",
+    "dst_host_rerror_rate",
+    "protocol_type",
+    "service",
+    "flag"
+  ],
+  "dataset_coverage": 1.0,
+  "ignored_columns": [],
+  "classes": [
+    "dos",
+    "normal",
+    "probe",
+    "r2l",
+    "u2r"
+  ],
+  "trained_at": "2026-10-20T07:44:48+00:00",
+  "train_seconds": 16.81
+}

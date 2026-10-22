@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SentinelIDS — AI-Powered Intrusion Detection System</title>
+  <meta name="description" content="SentinelIDS analyses network flow datasets with machine learning, flags malicious traffic with risk levels and plain-language reasons, and visualises attack patterns on a live dashboard. IBM Cyber Security Project by Er-Suzen Kumar Mohanty.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ff9d2e' d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3Cpath fill='%23ff3d71' d='M12 22s8-4 8-10V11L12 22z'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/vendor/chart.umd.min.js"></script>
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#analyzer">Skip to analyzer</a>
+
+  <!-- ================= HEADER ================= -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <circle cx="12" cy="11" r="2.4"/>
+          <path d="M12 4.6v2M12 15.4v2M5.6 11h2M16.4 11h2"/>
+        </svg>
+      </span>
+      <div class="brand-text">
+        <h1>SentinelIDS</h1>
+        <p class="tagline">AI-powered intrusion detection for network flows</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn-3d active" id="btn3d" type="button" aria-pressed="true"
+              title="Toggle the 3D / flat dashboard view">
+        <span class="cube" aria-hidden="true"></span> 3D
+      </button>
+      <span class="badge" id="modelStatus"><span class="dot"></span> checking model…</span>
+    </div>
+  </header>
+
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="radar" aria-hidden="true"><span class="radar-sweep"></span></div>
+    <div class="hero-inner">
+      <span class="chip">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        IBM Cyber Security Project
+      </span>
+      <h2 class="hero-title">See attacks <span class="grad">as they happen</span></h2>
+      <p class="hero-sub">
+        Upload a network-flow dataset (or load the built-in demo). SentinelIDS classifies every
+        flow with machine learning, hunts for unusual behaviour, and explains each alert
+        with <strong>plain-language reasons</strong> and a risk level your team can act on.
+      </p>
+      <div class="hero-stats">
+        <div class="stat"><b>30</b><span>flow features</span></div>
+        <div class="stat"><b>2</b><span>ML models</span></div>
+        <div class="stat"><b>5</b><span>attack classes</span></div>
+        <div class="stat"><b>100%</b><span>explained</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MAIN ================= -->
+  <main class="layout">
+
+    <!-- ---------- Controls ---------- -->
+    <section class="panel" id="analyzer">
+      <div class="panel-head">
+        <h2>Analyse network traffic</h2>
+        <p>NSL-KDD / KDD Cup style CSV headers are supported out of the box.</p>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-primary" id="btnDemo" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M8 12l2.5 2.5L16 9"/></svg>
+          Load demo dataset
+        </button>
+
+        <label class="btn btn-ghost" for="fileInput">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v13"/></svg>
+          Upload CSV
+        </label>
+        <input type="file" id="fileInput" accept=".csv" hidden>
+
+        <span class="source" id="sourceInfo">No dataset analysed yet</span>
+      </div>
+
+      <div class="dropzone" id="dropzone">
+        or drop a <code>.csv</code> file anywhere in this box
+      </div>
+
+      <details class="format">
+        <summary>Expected CSV format</summary>
+        <p>Any mix of these columns works — the header names are mapped
+          automatically (<code>src_bytes</code>, <code>Total Length of Fwd Packets</code> …).
+          A <code>label</code> / <code>class</code> column is optional but enables
+          ground-truth scoring.</p>
+        <pre>duration,protocol_type,service,flag,src_bytes,dst_bytes,count,serror_rate,dst_host_count,label
+0.02,tcp,http,SF,232,1200,5,0.0,10,normal
+0.00,tcp,private,S0,0,0,318,1.0,255,neptune</pre>
+      </details>
+
+      <div class="error" id="errorBox" hidden></div>
+    </section>
+
+    <!-- ---------- Real-time monitor ---------- -->
+    <section class="panel" id="livePanel">
+      <div class="panel-head row">
+        <div>
+          <h2>Real-time monitor</h2>
+          <p>Watches <strong>this computer's live network traffic</strong> with the
+          same models &amp; rules — packet capture (scapy/Npcap) or the OS
+          connection table. Metadata only, never packet contents.</p>
+        </div>
+        <div class="controls">
+          <select id="liveBackend" class="select" aria-label="Capture backend">
+            <option value="auto">auto (packet capture if possible)</option>
+            <option value="scapy">packet capture · scapy/Npcap</option>
+            <option value="system">OS connection table · psutil</option>
+          </select>
+          <input type="number" id="liveInterval" class="num-input" min="1" max="30"
+                 step="1" value="3" aria-label="Seconds per detection window"
+                 title="Seconds per detection window">
+          <button class="btn btn-primary" id="liveStart" type="button">Start live monitoring</button>
+          <button class="btn" id="liveStop" type="button" hidden>Stop</button>
+          <span class="badge" id="liveStatus"><span class="dot"></span> idle</span>
+        </div>
+      </div>
+
+      <div class="live-stats" id="liveStats" hidden>
+        <span class="stat-chip"><b id="liveBackendName">—</b>backend</span>
+        <span class="stat-chip"><b id="liveUptime">—</b>uptime</span>
+        <span class="stat-chip"><b id="liveWindow">—</b>flows in window</span>
+        <span class="stat-chip"><b id="liveSeen">—</b>flows observed</span>
+        <span class="stat-chip"><b id="liveAlertCount">—</b>alerts raised</span>
+        <span class="stat-chip" id="livePrivChip"><b id="livePriv">—</b>privileges</span>
+      </div>
+
+      <div class="live-grid" id="liveGrid" hidden>
+        <div>
+          <h5 class="live-h">Active connections</h5>
+          <div class="table-wrap">
+            <table class="conn-table">
+              <thead><tr><th>Proto</th><th>Local</th><th>Remote</th><th>State</th><th>Process</th></tr></thead>
+              <tbody id="connBody"><tr><td colspan="5" class="empty">—</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <h5 class="live-h">Newest live alerts</h5>
+          <ul class="live-feed" id="liveFeed"><li class="feed-empty">Waiting for the first detection window…</li></ul>
+        </div>
+      </div>
+
+      <p class="table-foot">Live alerts are also appended to
+        <code>logs/live-alerts-YYYYMMDD.jsonl</code>. Packet capture needs the
+        Npcap driver; the connection-table backend needs nothing. Use
+        <b>Run as administrator</b> for full visibility of other processes.</p>
+    </section>
+
+    <!-- ---------- KPI cards ---------- -->
+    <section class="kpis" id="kpis" hidden>
+      <div class="kpi"><span class="kpi-label">Flows analysed</span><b id="kpiFlows">—</b><span class="kpi-sub" id="kpiFlowsSub">—</span></div>
+      <div class="kpi"><span class="kpi-label">Alerts raised</span><b id="kpiAlerts">—</b><span class="kpi-sub" id="kpiAlertsSub">—</span></div>
+      <div class="kpi kpi-danger"><span class="kpi-label">Malicious traffic</span><b id="kpiMalicious">—</b><span class="kpi-sub" id="kpiMaliciousSub">—</span></div>
+      <div class="kpi kpi-warn"><span class="kpi-label">High + critical</span><b id="kpiSevere">—</b><span class="kpi-sub">risk level</span></div>
+      <div class="kpi"><span class="kpi-label">Model F1 (hold-out)</span><b id="kpiF1">—</b><span class="kpi-sub" id="kpiF1Sub">—</span></div>
+    </section>
+
+    <!-- ---------- Charts ---------- -->
+    <section class="charts" id="charts" hidden>
+      <article class="panel chart-card">
+        <div class="panel-head"><h3>Risk levels</h3><p>Every analysed flow, by severity</p></div>
+        <canvas id="chartRisk" height="260"></canvas>
+      </article>
+
+      <article class="panel chart-card">
+        <div class="panel-head"><h3>Attack patterns</h3><p>Predicted category per flow</p></div>
+        <canvas id="chartCategories" height="260"></canvas>
+      </article>
+
+      <article class="panel chart-card chart-wide">
+        <div class="panel-head"><h3>Alerts over time</h3><p>Stacked by risk level</p></div>
+        <canvas id="chartTimeline" height="220"></canvas>
+      </article>
+
+      <article class="panel chart-card">
+        <div class="panel-head"><h3>Protocol split</h3><p>Benign vs. malicious traffic</p></div>
+        <canvas id="chartProtocols" height="260"></canvas>
+      </article>
+
+      <article class="panel chart-card">
+        <div class="panel-head"><h3>Targeted services</h3><p>Where the attacks were aimed</p></div>
+        <canvas id="chartServices" height="260"></canvas>
+      </article>
+
+      <article class="panel chart-card chart-wide" id="evalCard" hidden>
+        <div class="panel-head"><h3>Model quality on this dataset</h3><p>Per-class F1 against ground-truth labels</p></div>
+        <canvas id="chartEval" height="220"></canvas>
+      </article>
+    </section>
+
+    <!-- ---------- Alerts ---------- -->
+    <section class="panel" id="alertsPanel" hidden>
+      <div class="panel-head row">
+        <div>
+          <h2>Alerts</h2>
+          <p id="alertsNote">—</p>
+        </div>
+        <div class="filters" role="group" aria-label="Filter by risk level">
+          <button class="chip-btn active" data-level="all">All</button>
+          <button class="chip-btn lvl-critical" data-level="critical">Critical</button>
+          <button class="chip-btn lvl-high" data-level="high">High</button>
+          <button class="chip-btn lvl-medium" data-level="medium">Medium</button>
+          <button class="chip-btn lvl-low" data-level="low">Low</button>
+          <input type="search" id="alertSearch" placeholder="Search IP, service, category…" aria-label="Search alerts">
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="alerts-table">
+          <thead>
+            <tr>
+              <th>Risk</th><th>Score</th><th>Time</th><th>Source → Destination</th>
+              <th>Protocol</th><th>Service</th><th>Category</th><th>Confidence</th><th>Anomaly</th>
+            </tr>
+          </thead>
+          <tbody id="alertsBody">
+            <tr><td colspan="9" class="empty">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-foot" id="tableFoot" hidden></p>
+    </section>
+
+    <!-- ---------- How it works ---------- -->
+    <section class="panel">
+      <div class="panel-head"><h2>How SentinelIDS decides</h2></div>
+      <div class="explain-grid">
+        <div class="explain">
+          <span class="step-no">1</span>
+          <h4>Normalise the flows</h4>
+          <p>30 canonical features (27 numeric + protocol / service / flag) are extracted
+          from your CSV, whatever the original column names were.</p>
+        </div>
+        <div class="explain">
+          <span class="step-no">2</span>
+          <h4>Two models vote</h4>
+          <p>A class-balanced logistic-regression classifier predicts the attack category;
+          an IsolationForest scores how <em>unusual</em> each flow is — catching attack
+          types the classifier never saw.</p>
+        </div>
+        <div class="explain">
+          <span class="step-no">3</span>
+          <h4>Rules add the "why"</h4>
+          <p>20 behavioural signatures — SYN floods, sweeps, brute-force logins, privilege
+          escalation, exfiltration — turn a probability into a readable reason.</p>
+        </div>
+        <div class="explain">
+          <span class="step-no">4</span>
+          <h4>One risk score</h4>
+          <pre class="formula">risk = 0.50 × ML attack score
+     + 0.25 × anomaly score
+     + 0.25 × rule score</pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="11" r="2.4"/></svg>
+        </span>
+        <div>
+          <b>SentinelIDS</b>
+          <span>Defensive security · educational use only</span>
+        </div>
+      </div>
+      <div class="footer-made">
+        <span class="footer-label">Made by</span>
+        <b>Er-Suzen Kumar Mohanty</b>
+        <span class="footer-project">IBM Cyber Security Project</span>
+      </div>
+      <div class="footer-note">
+        <span class="footer-copy">© <span id="year">2026</span> SentinelIDS · v1.0</span>
+        <span>All analysis runs locally — nothing is uploaded anywhere.</span>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
